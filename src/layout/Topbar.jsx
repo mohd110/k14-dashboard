@@ -9,7 +9,7 @@ export default function Topbar({ children }) {
   )
 }
 
-export function SearchBox({ placeholder, className = '' }) {
+export function SearchBox({ placeholder, className = '', ...inputProps }) {
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-soft" />
@@ -17,6 +17,7 @@ export function SearchBox({ placeholder, className = '' }) {
         type="text"
         placeholder={placeholder}
         className="w-full rounded-full bg-line-soft py-[9px] pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:outline-none"
+        {...inputProps}
       />
     </div>
   )

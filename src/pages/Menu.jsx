@@ -43,19 +43,24 @@ function categoryFor(name = '') {
   return 'MAIN COURSE'
 }
 
-function Toggle({ on }) {
+function Toggle({ on, onClick, disabled }) {
   return (
-    <span
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      role="switch"
+      aria-checked={on}
       className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
         on ? 'bg-brand' : 'bg-line-2'
-      }`}
+      } ${disabled ? 'cursor-not-allowed opacity-60' : 'hover:brightness-95'}`}
     >
       <span
         className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
           on ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
-    </span>
+    </button>
   )
 }
 
@@ -63,6 +68,29 @@ export default function Menu() {
   const [active, setActive] = useState('Biryani')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState(null)
+
+  const toggleAvailability = async (product) => {
+    const next = !product.is_available
+    setSavingId(product.id)
+    // Optimistic update so the toggle responds instantly.
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, is_available: next } : p))
+    )
+    const { error } = await supabase
+      .from('products')
+      .update({ is_available: next })
+      .eq('id', product.id)
+    setSavingId(null)
+    if (error) {
+      console.error('Failed to update availability:', error.message)
+      alert(`Could not update availability: ${error.message}`)
+      // Roll back on failure.
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, is_available: !next } : p))
+      )
+    }
+  }
 
   useEffect(() => {
     let alive = true
@@ -216,7 +244,11 @@ export default function Menu() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <Toggle on={p.is_available} />
+                      <Toggle
+                        on={p.is_available}
+                        disabled={savingId === p.id}
+                        onClick={() => toggleAvailability(p)}
+                      />
                     </td>
                     <td className="px-5 py-4 text-right text-ink-soft">⋯</td>
                   </tr>

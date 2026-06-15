@@ -1,12 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutGrid,
-  Store,
   BookOpen,
   ShoppingBag,
-  Bike,
   Users,
-  Image as ImageIcon,
   BarChart3,
   Settings as SettingsIcon,
   LogOut,
@@ -15,15 +12,12 @@ import { useAuth } from '../lib/AuthContext.jsx'
 
 const mainNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { to: '/outlets', label: 'Outlets', icon: Store },
   { to: '/menu', label: 'Menu', icon: BookOpen },
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
-  { to: '/riders', label: 'Riders', icon: Bike },
   { to: '/customers', label: 'Customers', icon: Users },
 ]
 
 const secondaryNav = [
-  { to: '/banners', label: 'Banners', icon: ImageIcon },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]

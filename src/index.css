@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — aligned to K14 (black base, white text, red accent) */
+  --color-brand: #e23744;
+  --color-brand-dark: #c52d39;
+  --color-brand-light: #2a1416;
+
+  /* Text */
+  --color-ink: #ffffff;
+  --color-ink-soft: #b5b5b5;
+  --color-ink-muted: #9a9a9a;
+
+  /* Borders / surfaces */
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-soft: rgba(255, 255, 255, 0.06);
+  --color-line-2: rgba(255, 255, 255, 0.08);
+  --color-surface: #161616;
+  --color-surface-low: #0a0a0a;
+  --color-canvas: #000000;
+
+  /* Status */
+  --color-pos: #22c55e;
+  --color-pos-dark: #4ade80;
+  --color-pos-soft: rgba(34, 197, 94, 0.16);
+  --color-info: #60a5fa;
+  --color-info-soft: rgba(96, 165, 250, 0.16);
+  --color-gold: #d4af37;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+}
+
+/* ── K14 brand helpers ── */
+.text-gold {
+  color: var(--color-gold);
+}
+.k14-gold-gradient {
+  background: linear-gradient(135deg, #f5d77a 0%, #d4af37 45%, #a67c1f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

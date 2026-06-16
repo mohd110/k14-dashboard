@@ -44,6 +44,82 @@ const STATUS = {
 }
 const STATUS_KEYS = Object.keys(STATUS)
 
+/* advance-payment verification states (orders.payment_status) */
+const PAYMENT = {
+  awaiting_verification: { label: 'Unverified', bg: 'bg-[#3a2a10]', text: 'text-[#fbbf24]', dot: 'bg-[#f59e0b]' },
+  paid: { label: 'Paid', bg: 'bg-pos-soft', text: 'text-pos-dark', dot: 'bg-pos' },
+  failed: { label: 'Rejected', bg: 'bg-[#3a1212]', text: 'text-[#f87171]', dot: 'bg-[#ef4444]' },
+}
+const PAYMENT_KEYS = Object.keys(PAYMENT)
+
+/* Clickable payment pill — verify or reject the customer's 40% advance. */
+function PaymentSelect({ order, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const ref = useRef(null)
+  const p = PAYMENT[order.payment_status] ?? PAYMENT.awaiting_verification
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  const pick = async (payment_status) => {
+    setOpen(false)
+    if (payment_status === order.payment_status) return
+    setSaving(true)
+    const { error } = await supabase.from('orders').update({ payment_status }).eq('id', order.id)
+    setSaving(false)
+    if (error) {
+      console.error('Failed to update payment:', error.message)
+      alert(`Could not update payment: ${error.message}`)
+      return
+    }
+    onChange(order.id, payment_status)
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={saving}
+        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${p.bg} ${p.text} ${
+          saving ? 'opacity-60' : 'hover:brightness-95'
+        }`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${p.dot}`} /> {p.label}
+        <ChevronDown className="h-3 w-3 opacity-70" />
+      </button>
+      {open && (
+        <div className="absolute left-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+          {PAYMENT_KEYS.map((key) => {
+            const v = PAYMENT[key]
+            const current = key === order.payment_status
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => pick(key)}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium hover:bg-line-soft ${
+                  current ? 'text-ink' : 'text-ink-soft'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${v.dot}`} /> {v.label}
+                {current && <Check className="ml-auto h-3.5 w-3.5 text-brand" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* Clickable status pill — opens a menu to move an order through the workflow. */
 function StatusSelect({ order, onChange }) {
   const [open, setOpen] = useState(false)
@@ -158,6 +234,9 @@ export default function Orders() {
   const updateStatus = (id, status) =>
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
 
+  const updatePayment = (id, payment_status) =>
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, payment_status } : o)))
+
   const inKitchen = orders.filter((o) => ['accepted', 'preparing'].includes(o.status)).length
   const ready = orders.filter((o) => o.status === 'ready').length
   const potential = orders.reduce((sum, o) => sum + (o.total || 0), 0)
@@ -219,6 +298,7 @@ export default function Orders() {
                 <th className="px-5 py-3 font-semibold">Customer</th>
                 <th className="px-5 py-3 font-semibold">Items</th>
                 <th className="px-5 py-3 font-semibold">Total Price</th>
+                <th className="px-5 py-3 font-semibold">Advance Payment</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
                 <th className="px-5 py-3 text-right font-semibold">Time Elapsed</th>
               </tr>
@@ -226,11 +306,11 @@ export default function Orders() {
             <tbody className="divide-y divide-line-soft">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-sm text-ink-soft">Loading orders…</td>
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-ink-soft">Loading orders…</td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-sm text-ink-soft">No active orders.</td>
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-ink-soft">No active orders.</td>
                 </tr>
               ) : (
                 orders.map((o) => {
@@ -270,6 +350,13 @@ export default function Orders() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-sm font-semibold text-ink">₹{o.total}</td>
+                      <td className="px-5 py-4">
+                        <PaymentSelect order={o} onChange={updatePayment} />
+                        <p className="mt-1 text-xs text-ink-soft">
+                          ₹{o.advance_amount ?? 0} advance
+                          {o.payment_ref ? ` · UTR ${o.payment_ref}` : ''}
+                        </p>
+                      </td>
                       <td className="px-5 py-4">
                         <StatusSelect order={o} onChange={updateStatus} />
                       </td>

@@ -352,9 +352,20 @@ export default function Orders() {
                       <td className="px-5 py-4 text-sm font-semibold text-ink">₹{o.total}</td>
                       <td className="px-5 py-4">
                         <PaymentSelect order={o} onChange={updatePayment} />
-                        <p className="mt-1 text-xs text-ink-soft">
-                          ₹{o.advance_amount ?? 0} advance
-                          {o.payment_ref ? ` · UTR ${o.payment_ref}` : ''}
+                        <p className="mt-1 flex items-center gap-2 text-xs text-ink-soft">
+                          <span>₹{o.advance_amount ?? 0} advance</span>
+                          {o.payment_proof_url ? (
+                            <a
+                              href={o.payment_proof_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-gold underline underline-offset-2 hover:text-brand"
+                            >
+                              View screenshot
+                            </a>
+                          ) : o.payment_ref ? (
+                            <span>· UTR {o.payment_ref}</span>
+                          ) : null}
                         </p>
                       </td>
                       <td className="px-5 py-4">

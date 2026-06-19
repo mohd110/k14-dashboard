@@ -28,8 +28,7 @@ export default function Login() {
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8 shadow-[0_8px_24px_rgba(45,52,54,0.08)]">
         {/* brand */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <img src="/k14-logo.svg" alt="K14" className="mb-4 h-20 w-20 object-contain" />
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tight k14-gold-gradient">K14</h1>
+          <img src="/k14-logo.png" alt="K14 Bakers" className="mb-3 w-48 object-contain" />
           <p className="mt-1 text-xs font-semibold uppercase tracking-[1.2px] text-ink-soft">
             Restaurant Admin
           </p>

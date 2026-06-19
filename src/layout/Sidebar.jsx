@@ -47,16 +47,11 @@ export default function Sidebar() {
   return (
     <aside className="flex h-full w-[260px] shrink-0 flex-col justify-between border-r border-line bg-surface py-6 shadow-[1px_0_1px_rgba(0,0,0,0.05)]">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 pb-10">
-        <img src="/k14-logo.svg" alt="K14" className="h-11 w-11 shrink-0" />
-        <div className="flex flex-col gap-1">
-          <p className="text-[28px] font-extrabold leading-none tracking-[-0.5px] k14-gold-gradient">
-            K14
-          </p>
-          <p className="text-xs font-semibold uppercase leading-4 tracking-[1.2px] text-ink-soft">
-            Restaurant Admin
-          </p>
-        </div>
+      <div className="flex flex-col gap-2 px-6 pb-10">
+        <img src="/k14-logo.png" alt="K14 Bakers" className="w-40 object-contain" />
+        <p className="text-xs font-semibold uppercase leading-4 tracking-[1.2px] text-ink-soft">
+          Restaurant Admin
+        </p>
       </div>
 
       {/* Nav */}

@@ -320,16 +320,22 @@ export default function Orders() {
                     <tr key={o.id}>
                       <td className="px-5 py-4">
                         <span className="flex items-center gap-2">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-line-soft text-ink-soft">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-line-soft text-ink-soft">
                             <Hash className="h-3.5 w-3.5" />
                           </span>
-                          <span className="text-sm font-semibold text-brand">
-                            ORD-{o.id.slice(0, 4).toUpperCase()}
+                          <span className="font-mono text-xs font-semibold text-brand">
+                            {o.order_code || `ORD-${o.id.slice(0, 4).toUpperCase()}`}
                           </span>
                         </span>
                       </td>
                       <td className="px-5 py-4">
                         <p className="text-sm font-semibold text-ink">{addr.name || 'Customer'}</p>
+                        {addr.phone && (
+                          <p className="text-xs text-ink-soft">
+                            {addr.phone}
+                            {addr.alt_phone ? ` · alt ${addr.alt_phone}` : ''}
+                          </p>
+                        )}
                         <p className="max-w-[200px] truncate text-xs text-ink-soft">{addr.address || '—'}</p>
                       </td>
                       <td className="px-5 py-4">

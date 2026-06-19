@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons, Divider, ProfileChip } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
-import { upcomingDates } from '../lib/dates.js'
+import { upcomingDates, hijriFromIso } from '../lib/dates.js'
 
 const tabs = [
   { label: 'Biryani', icon: CookingPot },
@@ -234,6 +234,7 @@ function AvailabilityModal({ product, dates, onClose, onSaved }) {
               return (
                 <button
                   key={d.iso}
+                  type="button"
                   onClick={() => toggle(d.iso)}
                   className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors ${
                     isOn
@@ -243,6 +244,9 @@ function AvailabilityModal({ product, dates, onClose, onSaved }) {
                 >
                   <span>
                     <span className="block text-sm font-semibold text-ink">{d.full}</span>
+                    <span className="block text-[11px] font-medium text-gold">
+                      {hijriFromIso(d.iso)}
+                    </span>
                     <span
                       className={`block text-[11px] font-medium ${
                         isOn ? 'text-pos' : 'text-brand'
@@ -251,7 +255,20 @@ function AvailabilityModal({ product, dates, onClose, onSaved }) {
                       {isOn ? 'Available' : 'Unavailable'}
                     </span>
                   </span>
-                  <Toggle on={isOn} onClick={() => toggle(d.iso)} />
+                  {/* Visual-only switch — the whole row is the button, so this
+                      must NOT be a nested <button> (that double-fires toggle). */}
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors ${
+                      isOn ? 'bg-brand' : 'bg-line-2'
+                    }`}
+                  >
+                    <span
+                      className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                        isOn ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </span>
                 </button>
               )
             })}

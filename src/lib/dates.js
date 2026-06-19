@@ -23,6 +23,26 @@ export function minMenuIso(startOffset = 1) {
   return toIso(d)
 }
 
+/** Hijri (Islamic) date for a stored iso date, English transliteration —
+ *  e.g. "5 Muharram 1448 AH". Uses the Umm al-Qura calendar. */
+export function hijriFromIso(iso) {
+  const [y, m, d] = iso.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  try {
+    return new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date)
+  } catch {
+    return new Intl.DateTimeFormat('en-GB-u-ca-islamic', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date)
+  }
+}
+
 /** Upcoming dates starting `startOffset` days from today. */
 export function upcomingDates(count = 14, startOffset = 1) {
   const base = new Date()

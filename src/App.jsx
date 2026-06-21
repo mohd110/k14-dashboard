@@ -13,6 +13,11 @@ import Banners from './pages/Banners.jsx'
 import Reports from './pages/Reports.jsx'
 import Settings from './pages/Settings.jsx'
 
+/* Where each role lands by default. Bakery staff start on Orders. */
+function homeFor(role) {
+  return role === 'bakery' ? '/orders' : '/dashboard'
+}
+
 function Protected({ children }) {
   const { session, loading } = useAuth()
   if (loading) {
@@ -20,6 +25,22 @@ function Protected({ children }) {
   }
   if (!session) return <Navigate to="/login" replace />
   return children
+}
+
+/* Restrict a route to the given roles; bakery staff get bounced to their home. */
+function RoleRoute({ allow, children }) {
+  const { role, loading } = useAuth()
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-canvas text-ink-soft">Loading…</div>
+  }
+  if (role && !allow.includes(role)) return <Navigate to={homeFor(role)} replace />
+  return children
+}
+
+/* The index route ("/") sends each role to its default landing page. */
+function RoleHome() {
+  const { role } = useAuth()
+  return <Navigate to={homeFor(role)} replace />
 }
 
 export default function App() {
@@ -35,17 +56,19 @@ export default function App() {
               </Protected>
             }
           >
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Overview />} />
+            <Route path="/" element={<RoleHome />} />
+            {/* Shared by all staff (restaurant + bakery) */}
             <Route path="/orders" element={<Orders />} />
             <Route path="/menu" element={<Menu />} />
-            <Route path="/riders" element={<Riders />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/outlets" element={<Outlets />} />
-            <Route path="/delivery-fees" element={<DeliveryFees />} />
-            <Route path="/banners" element={<Banners />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
+            {/* Restaurant-admin only — bakery staff are redirected away */}
+            <Route path="/dashboard" element={<RoleRoute allow={['restaurant']}><Overview /></RoleRoute>} />
+            <Route path="/riders" element={<RoleRoute allow={['restaurant']}><Riders /></RoleRoute>} />
+            <Route path="/customers" element={<RoleRoute allow={['restaurant']}><Customers /></RoleRoute>} />
+            <Route path="/outlets" element={<RoleRoute allow={['restaurant']}><Outlets /></RoleRoute>} />
+            <Route path="/delivery-fees" element={<RoleRoute allow={['restaurant']}><DeliveryFees /></RoleRoute>} />
+            <Route path="/banners" element={<RoleRoute allow={['restaurant']}><Banners /></RoleRoute>} />
+            <Route path="/reports" element={<RoleRoute allow={['restaurant']}><Reports /></RoleRoute>} />
+            <Route path="/settings" element={<RoleRoute allow={['restaurant']}><Settings /></RoleRoute>} />
           </Route>
         </Routes>
       </BrowserRouter>

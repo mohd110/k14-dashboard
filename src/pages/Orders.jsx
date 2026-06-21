@@ -336,7 +336,19 @@ export default function Orders() {
                             {addr.alt_phone ? ` · alt ${addr.alt_phone}` : ''}
                           </p>
                         )}
+                        {(addr.fulfillment || addr.date || addr.time) && (
+                          <p className="text-xs text-ink-soft">
+                            {addr.fulfillment === 'delivery' ? 'Home Delivery' : 'Store Pickup'}
+                            {addr.date ? ` · ${addr.date}` : ''}
+                            {addr.time ? ` · ${addr.time}` : ''}
+                          </p>
+                        )}
                         <p className="max-w-[200px] truncate text-xs text-ink-soft">{addr.address || '—'}</p>
+                        {o.note && (
+                          <p className="mt-1 max-w-[220px] rounded-md bg-[#3a2a10] px-2 py-1 text-xs text-[#fbbf24]">
+                            📝 {o.note}
+                          </p>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <span className="flex items-center gap-2">

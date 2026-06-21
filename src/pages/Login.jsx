@@ -14,13 +14,20 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
+      setLoading(false)
       setError(error.message)
       return
     }
-    navigate('/dashboard', { replace: true })
+    // Bakery staff land on Orders; everyone else on the dashboard.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+    setLoading(false)
+    navigate(profile?.role === 'bakery' ? '/orders' : '/dashboard', { replace: true })
   }
 
   return (

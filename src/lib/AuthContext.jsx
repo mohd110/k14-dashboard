@@ -5,12 +5,27 @@ import { supabase } from './supabase.js'
 const SESSION_MAX_MS = 3 * 60 * 60 * 1000
 const LOGIN_AT_KEY = 'wb-login-at'
 
-const AuthContext = createContext({ session: null, user: null, loading: true, signOut: () => {} })
+const AuthContext = createContext({ session: null, user: null, role: null, loading: true, signOut: () => {} })
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
+  const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
   const timerRef = useRef(null)
+
+  // Load the signed-in account's role from profiles (restaurant | bakery).
+  const loadRole = async (s) => {
+    if (!s?.user) {
+      setRole(null)
+      return
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', s.user.id)
+      .single()
+    setRole(data?.role ?? null)
+  }
 
   useEffect(() => {
     const clearTimer = () => {
@@ -43,15 +58,17 @@ export function AuthProvider({ children }) {
       timerRef.current = setTimeout(forceSignOut, remaining)
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const s = data.session ?? null
       setSession(s)
+      await loadRole(s)
       armExpiry(!!s)
       setLoading(false)
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s ?? null)
+      loadRole(s ?? null)
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem(LOGIN_AT_KEY)
         clearTimer()
@@ -74,7 +91,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, role, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )

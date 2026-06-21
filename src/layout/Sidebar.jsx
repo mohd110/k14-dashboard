@@ -41,32 +41,44 @@ function NavItem({ to, label, icon: Icon }) {
 }
 
 export default function Sidebar() {
-  const { user, signOut } = useAuth()
+  const { user, role, signOut } = useAuth()
   const email = user?.email ?? ''
-  const name = user?.user_metadata?.full_name || email.split('@')[0] || 'Restaurant Admin'
+  const isBakery = role === 'bakery'
+  const roleLabel = isBakery ? 'Bakery Staff' : 'Restaurant Admin'
+  const name =
+    user?.user_metadata?.full_name || email.split('@')[0] || roleLabel
+
+  // Bakery staff only get Menu + Orders; admins get the full nav.
+  const visibleMain = isBakery
+    ? mainNav.filter((item) => item.to === '/menu' || item.to === '/orders')
+    : mainNav
+  const visibleSecondary = isBakery ? [] : secondaryNav
+
   return (
     <aside className="flex h-full w-[260px] shrink-0 flex-col justify-between border-r border-line bg-surface py-6 shadow-[1px_0_1px_rgba(0,0,0,0.05)]">
       {/* Logo */}
       <div className="flex flex-col gap-2 px-6 pb-10">
         <img src="/k14-logo.png" alt="K14 Bakers" className="w-40 object-contain" />
         <p className="text-xs font-semibold uppercase leading-4 tracking-[1.2px] text-ink-soft">
-          Restaurant Admin
+          {roleLabel}
         </p>
       </div>
 
       {/* Nav */}
       <nav className="flex flex-1 flex-col items-center gap-1 px-2 pt-1">
-        {mainNav.map((item) => (
+        {visibleMain.map((item) => (
           <NavItem key={item.to} {...item} />
         ))}
 
-        <div className="mt-6 w-[227px] border-t border-line pt-5">
-          <div className="flex flex-col items-center gap-1">
-            {secondaryNav.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
+        {visibleSecondary.length > 0 && (
+          <div className="mt-6 w-[227px] border-t border-line pt-5">
+            <div className="flex flex-col items-center gap-1">
+              {visibleSecondary.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Profile */}

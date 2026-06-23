@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   Plus,
-  SlidersHorizontal,
-  CookingPot,
-  Beef,
-  IceCream,
-  CupSoda,
   TrendingUp,
   CheckCircle2,
   AlertTriangle,
@@ -18,13 +13,6 @@ import {
 import Topbar, { SearchBox, TopIcons, Divider, ProfileChip } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
 import { upcomingDates, hijriFromIso } from '../lib/dates.js'
-
-const tabs = [
-  { label: 'Biryani', icon: CookingPot },
-  { label: 'Kebabs', icon: Beef },
-  { label: 'Desserts', icon: IceCream },
-  { label: 'Beverages', icon: CupSoda },
-]
 
 const LOW_STOCK_THRESHOLD = 5
 
@@ -365,7 +353,6 @@ function StockModal({ product, onClose, onSaved }) {
 }
 
 export default function Menu() {
-  const [active, setActive] = useState('Biryani')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState(null)
@@ -453,7 +440,7 @@ export default function Menu() {
 
   const stock = [
     { label: 'In Stock', count: pad(inStock), icon: CheckCircle2, tone: 'text-pos', bg: 'bg-pos-soft' },
-    { label: 'Low Stock', count: pad(lowStock), icon: AlertTriangle, tone: 'text-[#fbbf24]', bg: 'bg-[#3a2a10]' },
+    { label: 'Low Stock', count: pad(lowStock), icon: AlertTriangle, tone: 'text-[#b45309]', bg: 'bg-[#fef3c7]' },
     { label: 'Sold Out', count: pad(soldOut), icon: XCircle, tone: 'text-brand', bg: 'bg-brand-light' },
   ]
 
@@ -484,31 +471,6 @@ export default function Menu() {
 
         {/* table card */}
         <div className="rounded-xl border border-line bg-surface">
-          {/* tabs */}
-          <div className="flex items-center justify-between border-b border-line px-5">
-            <div className="flex items-center gap-6">
-              {tabs.map((t) => {
-                const isActive = active === t.label
-                return (
-                  <button
-                    key={t.label}
-                    onClick={() => setActive(t.label)}
-                    className={`flex items-center gap-2 border-b-2 py-4 text-sm font-semibold transition-colors ${
-                      isActive
-                        ? 'border-brand text-brand'
-                        : 'border-transparent text-ink-soft hover:text-ink'
-                    }`}
-                  >
-                    <t.icon className="h-4 w-4" /> {t.label}
-                  </button>
-                )
-              })}
-            </div>
-            <button className="text-ink-soft">
-              <SlidersHorizontal className="h-4 w-4" />
-            </button>
-          </div>
-
           {/* table */}
           <table className="w-full text-left">
             <thead>
@@ -539,7 +501,7 @@ export default function Menu() {
                 products.map((p) => {
                   const s = stockOf(p)
                   const stockTone =
-                    s === 0 ? 'text-brand' : s <= LOW_STOCK_THRESHOLD ? 'text-[#fbbf24]' : 'text-ink'
+                    s === 0 ? 'text-brand' : s <= LOW_STOCK_THRESHOLD ? 'text-[#b45309]' : 'text-ink'
                   const off = offDays[p.id] || 0
                   return (
                     <tr key={p.id}>
@@ -559,7 +521,7 @@ export default function Menu() {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="rounded bg-[#2a2410] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gold">
+                        <span className="rounded bg-[#fdf6e3] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gold">
                           {categoryFor(p.name)}
                         </span>
                       </td>

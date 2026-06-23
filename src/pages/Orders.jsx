@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/AuthContext.jsx'
 
 /* map dish name -> brand photo */
 function imgFor(name = '') {
@@ -39,16 +40,17 @@ function elapsed(iso) {
 const STATUS = {
   pending: { label: 'Pending', bg: 'bg-line-soft', text: 'text-ink-soft', dot: 'bg-ink-soft' },
   accepted: { label: 'Accepted', bg: 'bg-info-soft', text: 'text-info', dot: 'bg-info' },
-  preparing: { label: 'Preparing', bg: 'bg-[#3a2a10]', text: 'text-[#fbbf24]', dot: 'bg-[#f59e0b]' },
+  preparing: { label: 'Preparing', bg: 'bg-[#fef3c7]', text: 'text-[#b45309]', dot: 'bg-[#f59e0b]' },
   ready: { label: 'Ready', bg: 'bg-pos-soft', text: 'text-pos-dark', dot: 'bg-pos' },
+  rejected: { label: 'Rejected', bg: 'bg-[#fee2e2]', text: 'text-[#dc2626]', dot: 'bg-[#ef4444]' },
 }
 const STATUS_KEYS = Object.keys(STATUS)
 
 /* advance-payment verification states (orders.payment_status) */
 const PAYMENT = {
-  awaiting_verification: { label: 'Unverified', bg: 'bg-[#3a2a10]', text: 'text-[#fbbf24]', dot: 'bg-[#f59e0b]' },
+  awaiting_verification: { label: 'Unverified', bg: 'bg-[#fef3c7]', text: 'text-[#b45309]', dot: 'bg-[#f59e0b]' },
   paid: { label: 'Paid', bg: 'bg-pos-soft', text: 'text-pos-dark', dot: 'bg-pos' },
-  failed: { label: 'Rejected', bg: 'bg-[#3a1212]', text: 'text-[#f87171]', dot: 'bg-[#ef4444]' },
+  failed: { label: 'Rejected', bg: 'bg-[#fee2e2]', text: 'text-[#dc2626]', dot: 'bg-[#ef4444]' },
 }
 const PAYMENT_KEYS = Object.keys(PAYMENT)
 
@@ -204,6 +206,8 @@ function Kpi({ label, value, sub, icon: Icon, iconBg }) {
 }
 
 export default function Orders() {
+  const { role } = useAuth()
+  const isBakery = role === 'bakery'
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -243,9 +247,12 @@ export default function Orders() {
 
   const kpis = [
     { label: 'TOTAL ACTIVE', value: String(orders.length), sub: 'All live orders', icon: ClipboardList, iconBg: 'bg-brand-light text-brand' },
-    { label: 'IN KITCHEN', value: String(inKitchen), sub: 'Accepted + preparing', icon: ChefHat, iconBg: 'bg-[#3a2a10] text-[#fbbf24]' },
+    { label: 'IN KITCHEN', value: String(inKitchen), sub: 'Accepted + preparing', icon: ChefHat, iconBg: 'bg-[#fef3c7] text-[#b45309]' },
     { label: 'READY', value: String(ready), sub: 'Awaiting pickup', icon: CheckCircle2, iconBg: 'bg-pos-soft text-pos-dark' },
-    { label: 'POTENTIAL REV.', value: `₹${potential.toLocaleString('en-IN')}`, sub: 'Real-time valuation', icon: TrendingUp, iconBg: 'bg-info-soft text-info' },
+    // Revenue is hidden from bakery staff.
+    ...(isBakery
+      ? []
+      : [{ label: 'POTENTIAL REV.', value: `₹${potential.toLocaleString('en-IN')}`, sub: 'Real-time valuation', icon: TrendingUp, iconBg: 'bg-info-soft text-info' }]),
   ]
 
   return (
@@ -269,7 +276,7 @@ export default function Orders() {
 
       <div className="space-y-6 p-8">
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-6">
+        <div className={`grid gap-6 ${isBakery ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {kpis.map((k) => (
             <Kpi key={k.label} {...k} />
           ))}
@@ -345,7 +352,7 @@ export default function Orders() {
                         )}
                         <p className="max-w-[200px] truncate text-xs text-ink-soft">{addr.address || '—'}</p>
                         {o.note && (
-                          <p className="mt-1 max-w-[220px] rounded-md bg-[#3a2a10] px-2 py-1 text-xs text-[#fbbf24]">
+                          <p className="mt-1 max-w-[220px] rounded-md bg-[#fef3c7] px-2 py-1 text-xs text-[#b45309]">
                             📝 {o.note}
                           </p>
                         )}

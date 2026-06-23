@@ -4,6 +4,7 @@ import DashboardLayout from './layout/DashboardLayout.jsx'
 import Login from './pages/Login.jsx'
 import Overview from './pages/Overview.jsx'
 import Orders from './pages/Orders.jsx'
+import Calendar from './pages/Calendar.jsx'
 import Menu from './pages/Menu.jsx'
 import Riders from './pages/Riders.jsx'
 import Customers from './pages/Customers.jsx'
@@ -13,9 +14,9 @@ import Banners from './pages/Banners.jsx'
 import Reports from './pages/Reports.jsx'
 import Settings from './pages/Settings.jsx'
 
-/* Where each role lands by default. Bakery staff start on Orders. */
+/* Where each role lands by default. Bakery staff start on the Calendar. */
 function homeFor(role) {
-  return role === 'bakery' ? '/orders' : '/dashboard'
+  return role === 'bakery' ? '/calendar' : '/dashboard'
 }
 
 function Protected({ children }) {
@@ -58,6 +59,7 @@ export default function App() {
           >
             <Route path="/" element={<RoleHome />} />
             {/* Shared by all staff (restaurant + bakery) */}
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/menu" element={<Menu />} />
             {/* Restaurant-admin only — bakery staff are redirected away */}

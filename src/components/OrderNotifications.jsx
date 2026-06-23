@@ -5,9 +5,10 @@ import { supabase } from '../lib/supabase.js'
 let toastSeq = 0
 
 /* ── Loud, repeating new-order alarm (rings for 1 minute) ──────────────
- * A harsh two-tone siren at near-max volume, repeated every 0.7s for 60s
- * so staff can't miss an incoming order. Best-effort: silently skipped if
- * the browser blocks audio. Call stopAlarm() to silence it early. */
+ * Mimics a classic telephone ring (dual 440 + 480 Hz tones, 2s ring / 1s
+ * pause cadence) at near-max volume so staff can't miss an incoming order.
+ * Best-effort: silently skipped if the browser blocks audio. Call
+ * stopAlarm() to silence it early. */
 const ALARM_DURATION_MS = 60_000
 let alarmCtx = null
 let alarmInterval = null
@@ -41,31 +42,33 @@ function startAlarm() {
     alarmCtx = ctx
     ctx.resume?.()
 
-    const beep = (freq, t0, dur) => {
+    const tone = (freq, t0, dur) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
-      osc.type = 'square' // harsh, carries across a kitchen
+      osc.type = 'sine' // smoother, phone-like
       osc.frequency.value = freq
       gain.gain.setValueAtTime(0.0001, t0)
-      gain.gain.exponentialRampToValueAtTime(0.9, t0 + 0.02) // very loud
-      gain.gain.setValueAtTime(0.9, t0 + dur - 0.04)
+      gain.gain.exponentialRampToValueAtTime(0.85, t0 + 0.01) // very loud
+      gain.gain.setValueAtTime(0.85, t0 + dur - 0.03)
       gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
       osc.start(t0)
       osc.stop(t0 + dur)
     }
 
-    // One "ring" = two alternating tones (siren-like).
+    // One "ring" = the classic telephone double-tone (440 + 480 Hz) buzzing
+    // for ~2s. Phones use a 2s-on / 4s-off cadence; we shorten the gap so it
+    // feels urgent in a busy kitchen.
     const ring = () => {
       if (!alarmCtx) return
       const now = ctx.currentTime
-      beep(1046, now, 0.25)
-      beep(784, now + 0.3, 0.25)
+      tone(440, now, 2)
+      tone(480, now, 2)
     }
 
     ring()
-    alarmInterval = setInterval(ring, 700)
+    alarmInterval = setInterval(ring, 3000) // ~2s ring + ~1s pause
     alarmTimeout = setTimeout(stopAlarm, ALARM_DURATION_MS)
   } catch {
     /* audio not available — silently skip */

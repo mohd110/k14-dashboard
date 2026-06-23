@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutGrid,
+  CalendarDays,
   BookOpen,
   ShoppingBag,
   Users,
@@ -12,6 +13,7 @@ import { useAuth } from '../lib/AuthContext.jsx'
 
 const mainNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
+  { to: '/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/menu', label: 'Menu', icon: BookOpen },
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/customers', label: 'Customers', icon: Users },
@@ -48,9 +50,9 @@ export default function Sidebar() {
   const name =
     user?.user_metadata?.full_name || email.split('@')[0] || roleLabel
 
-  // Bakery staff only get Menu + Orders; admins get the full nav.
+  // Bakery staff only get Calendar + Menu + Orders; admins get the full nav.
   const visibleMain = isBakery
-    ? mainNav.filter((item) => item.to === '/menu' || item.to === '/orders')
+    ? mainNav.filter((item) => ['/calendar', '/menu', '/orders'].includes(item.to))
     : mainNav
   const visibleSecondary = isBakery ? [] : secondaryNav
 

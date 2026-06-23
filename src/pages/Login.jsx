@@ -20,14 +20,14 @@ export default function Login() {
       setError(error.message)
       return
     }
-    // Bakery staff land on Orders; everyone else on the dashboard.
+    // Bakery staff land on the Calendar; everyone else on the dashboard.
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
       .single()
     setLoading(false)
-    navigate(profile?.role === 'bakery' ? '/orders' : '/dashboard', { replace: true })
+    navigate(profile?.role === 'bakery' ? '/calendar' : '/dashboard', { replace: true })
   }
 
   return (

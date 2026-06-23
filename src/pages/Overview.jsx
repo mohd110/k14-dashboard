@@ -72,7 +72,7 @@ function KpiCard({ label, value, valueSize, sub, icon: Icon, badge }) {
 
 /* ---------- Recent orders ---------- */
 const statusStyles = {
-  PREPARING: 'bg-[#3a2a10] text-[#fbbf24]',
+  PREPARING: 'bg-[#fef3c7] text-[#b45309]',
   READY: 'bg-pos-soft text-pos-dark',
   ACCEPTED: 'bg-info-soft text-info',
   PENDING: 'bg-line-soft text-ink-soft',

@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase.js'
 
 let toastSeq = 0
 
-/* ── Loud, repeating new-order alarm (rings for 1 minute) ──────────────
- * Mimics a classic telephone ring (dual 440 + 480 Hz tones, 2s ring / 1s
- * pause cadence) at near-max volume so staff can't miss an incoming order.
+/* ── Loud, irritating new-order alarm (rings for 1 minute) ─────────────
+ * Two-tone siren: alternates between a 660 Hz and an 880 Hz harsh square
+ * wave (ambulance / fire-truck style), swapping every 0.4s at near-max
+ * volume so staff can't miss an incoming order.
  * Best-effort: silently skipped if the browser blocks audio. Call
  * stopAlarm() to silence it early. */
 const ALARM_DURATION_MS = 60_000
@@ -47,28 +48,29 @@ function startAlarm() {
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
-      osc.type = 'sine' // smoother, phone-like
+      osc.type = 'square' // harsh, buzzy, piercing
       osc.frequency.value = freq
       gain.gain.setValueAtTime(0.0001, t0)
-      gain.gain.exponentialRampToValueAtTime(0.85, t0 + 0.01) // very loud
-      gain.gain.setValueAtTime(0.85, t0 + dur - 0.03)
+      gain.gain.exponentialRampToValueAtTime(0.85, t0 + 0.008) // very loud
+      gain.gain.setValueAtTime(0.85, t0 + dur - 0.02)
       gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
       osc.start(t0)
       osc.stop(t0 + dur)
     }
 
-    // One "ring" = the classic telephone double-tone (440 + 480 Hz) buzzing
-    // for ~2s. Phones use a 2s-on / 4s-off cadence; we shorten the gap so it
-    // feels urgent in a busy kitchen.
+    // One "ring" = a two-tone siren cycle: 660 Hz then 880 Hz, each held for
+    // 0.4s back-to-back with no gap (ambulance / fire-truck wail). The cycle
+    // repeats continuously so it nags until silenced.
+    const STEP = 0.4
     const ring = () => {
       if (!alarmCtx) return
       const now = ctx.currentTime
-      tone(440, now, 2)
-      tone(480, now, 2)
+      tone(660, now, STEP)
+      tone(880, now + STEP, STEP)
     }
 
     ring()
-    alarmInterval = setInterval(ring, 3000) // ~2s ring + ~1s pause
+    alarmInterval = setInterval(ring, STEP * 2 * 1000) // seamless 0.8s loop
     alarmTimeout = setTimeout(stopAlarm, ALARM_DURATION_MS)
   } catch {
     /* audio not available — silently skip */

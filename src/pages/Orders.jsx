@@ -351,6 +351,12 @@ export default function Orders() {
                           </p>
                         )}
                         <p className="max-w-[200px] truncate text-xs text-ink-soft">{addr.address || '—'}</p>
+                        {addr.packing && addr.packing !== 'none' && (
+                          <p className="mt-1 inline-block rounded-md bg-line-soft px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
+                            📦 {addr.packing_label || addr.packing}
+                            {addr.packing_fee ? ` · ₹${addr.packing_fee}` : ''}
+                          </p>
+                        )}
                         {o.note && (
                           <p className="mt-1 max-w-[220px] rounded-md bg-[#fef3c7] px-2 py-1 text-xs text-[#b45309]">
                             📝 {o.note}

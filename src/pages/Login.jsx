@@ -35,7 +35,9 @@ export default function Login() {
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8 shadow-[0_8px_24px_rgba(45,52,54,0.08)]">
         {/* brand */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <img src="/k14-logo.png" alt="K14 Bakers" className="mb-3 w-48 object-contain" />
+          <div className="mb-3 flex items-center justify-center rounded-xl bg-black px-5 py-4">
+            <img src="/k14-logo.png" alt="K14 Bakers" className="w-48 object-contain" />
+          </div>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[1.2px] text-ink-soft">
             Restaurant Admin
           </p>

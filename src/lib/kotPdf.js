@@ -53,6 +53,7 @@ function ticketHtml(o) {
       ${addr.name ? `<div class="row"><span>Customer</span><b>${esc(addr.name)}</b></div>` : ''}
       ${addr.phone ? `<div class="row"><span>Phone</span><b>${esc(addr.phone)}${addr.alt_phone ? ` / ${esc(addr.alt_phone)}` : ''}</b></div>` : ''}
       ${addr.store ? `<div class="row"><span>Store</span><b>${esc(addr.store)}</b></div>` : ''}
+      ${addr.packing && addr.packing !== 'none' ? `<div class="row"><span>Packing</span><b>${esc(addr.packing_label || addr.packing)}${addr.packing_fee ? ` (₹${addr.packing_fee})` : ''}</b></div>` : ''}
     </div>
     <table class="items">
       <thead><tr><th class="q">Qty</th><th class="n">Item</th></tr></thead>

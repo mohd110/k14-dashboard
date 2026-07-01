@@ -35,8 +35,8 @@ export default function Login() {
       <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-10 shadow-[0_12px_40px_rgba(45,52,54,0.10)]">
         {/* brand */}
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="flex items-center justify-center rounded-2xl bg-black px-7 py-5">
-            <img src="/k14-logo.png" alt="K14 Bakers" className="w-48 object-contain" />
+          <div className="overflow-hidden rounded-2xl shadow-sm">
+            <img src="/bmt-logo.png" alt="BookMyTabarruk" className="w-44 object-contain" />
           </div>
           <p className="mt-5 text-xs font-semibold uppercase tracking-[1.4px] text-ink-soft">
             Restaurant Admin
@@ -81,7 +81,8 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition-transform active:scale-[0.99] disabled:opacity-60"
+            style={{ background: 'linear-gradient(180deg, #1a5c35 0%, #0e3d22 100%)' }}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? 'Signing in…' : 'Sign In'}

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons, Divider, ProfileChip } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/AuthContext.jsx'
 import { upcomingDates, hijriFromIso } from '../lib/dates.js'
 
 const LOW_STOCK_THRESHOLD = 5
@@ -353,6 +354,7 @@ function StockModal({ product, onClose, onSaved }) {
 }
 
 export default function Menu() {
+  const { effectiveStoreId } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState(null)
@@ -388,8 +390,13 @@ export default function Menu() {
     let alive = true
     const from = dates[0].iso
     const to = dates[dates.length - 1].iso
+    // Products are world-readable (RLS), so scope by store on the client
+    // — a store account only manages its own menu; super-admin sees the
+    // selected store (or all when no store is picked).
+    let prodQuery = supabase.from('products').select('*').order('price', { ascending: false })
+    if (effectiveStoreId) prodQuery = prodQuery.eq('store_id', effectiveStoreId)
     Promise.all([
-      supabase.from('products').select('*').order('price', { ascending: false }),
+      prodQuery,
       supabase
         .from('product_availability')
         .select('product_id, available_date')
@@ -416,7 +423,7 @@ export default function Menu() {
       alive = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [effectiveStoreId])
 
   const pad = (n) => String(n).padStart(2, '0')
   const stockOf = (p) => p.stock ?? 0

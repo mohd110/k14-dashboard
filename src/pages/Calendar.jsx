@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/AuthContext.jsx'
 import { toIso } from '../lib/dates.js'
 import { printKot } from '../lib/kotPdf.js'
 
@@ -141,6 +142,7 @@ function KotCard({ order, onAccept, onReject, busy }) {
 }
 
 export default function Calendar() {
+  const { effectiveStoreId } = useAuth()
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -155,16 +157,17 @@ export default function Calendar() {
   const [busyId, setBusyId] = useState(null)
 
   const load = useCallback(() => {
-    return supabase
+    let q = supabase
       .from('orders')
       .select('*, order_items(quantity, price_at_order, products(name, price))')
       .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error('Failed to load orders:', error.message)
-        setOrders(data ?? [])
-        setLoading(false)
-      })
-  }, [])
+    if (effectiveStoreId) q = q.eq('store_id', effectiveStoreId)
+    return q.then(({ data, error }) => {
+      if (error) console.error('Failed to load orders:', error.message)
+      setOrders(data ?? [])
+      setLoading(false)
+    })
+  }, [effectiveStoreId])
 
   useEffect(() => {
     load()

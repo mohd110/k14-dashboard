@@ -16,15 +16,18 @@ import Topbar, { SearchBox, TopIcons } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
 
-/* map dish name -> brand photo */
-function imgFor(name = '') {
-  const n = name.toLowerCase()
-  if (n.includes('mutton') || n.includes('korma')) return '/assets/mutton-korma.png'
-  if (n.includes('paneer')) return '/assets/paneer-tikka.png'
-  if (n.includes('butter')) return '/assets/butter-chicken.png'
-  if (n.includes('tikka') || n.includes('aatishi')) return '/assets/chicken-aatishi.png'
-  if (n.includes('kebab') || n.includes('galouti')) return '/assets/galouti-kebab.png'
-  return '/assets/chicken-biryani.png'
+/* Product thumbnail: prefer the item's own photo, else a neutral tinted
+   initial (data-URI SVG) so we never show an unrelated brand dish. */
+function imgFor(name = '', photoUrl) {
+  if (photoUrl) return photoUrl
+  const initial = (name || '?').trim().charAt(0).toUpperCase()
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'>` +
+    `<rect width='48' height='48' fill='#f3f4f6'/>` +
+    `<text x='50%' y='50%' dy='.35em' text-anchor='middle' ` +
+    `font-family='sans-serif' font-size='22' font-weight='700' fill='#9ca3af'>${initial}</text>` +
+    `</svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
 function elapsed(iso) {
@@ -206,22 +209,25 @@ function Kpi({ label, value, sub, icon: Icon, iconBg }) {
 }
 
 export default function Orders() {
-  const { role } = useAuth()
+  const { role, effectiveStoreId } = useAuth()
   const isBakery = role === 'bakery'
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(() => {
-    return supabase
+    let q = supabase
       .from('orders')
       .select('*, order_items(quantity, products(name, photo_url))')
       .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error('Failed to load orders:', error.message)
-        setOrders(data ?? [])
-        setLoading(false)
-      })
-  }, [])
+    // Scoped accounts are already limited by RLS; this also lets the
+    // super-admin narrow to a single store via the switcher.
+    if (effectiveStoreId) q = q.eq('store_id', effectiveStoreId)
+    return q.then(({ data, error }) => {
+      if (error) console.error('Failed to load orders:', error.message)
+      setOrders(data ?? [])
+      setLoading(false)
+    })
+  }, [effectiveStoreId])
 
   useEffect(() => {
     load()
@@ -369,7 +375,7 @@ export default function Orders() {
                             {items.slice(0, 2).map((it, i) => (
                               <img
                                 key={i}
-                                src={imgFor(it.products?.name)}
+                                src={imgFor(it.products?.name, it.products?.photo_url)}
                                 alt=""
                                 className="h-7 w-7 rounded-full border-2 border-white bg-line-2 object-cover"
                               />

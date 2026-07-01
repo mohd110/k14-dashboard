@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BellRing, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/AuthContext.jsx'
 
 let toastSeq = 0
 
@@ -77,18 +78,26 @@ function startAlarm() {
   }
 }
 
-/* Listens for new orders in real time and shows toast notifications. */
+/* Listens for new orders in real time and shows toast notifications.
+ * Scoped to the active store: a store account only hears its own orders;
+ * the super-admin hears the store they're viewing, or every store when
+ * no store is selected in the switcher. */
 export default function OrderNotifications() {
+  const { effectiveStoreId } = useAuth()
   const [toasts, setToasts] = useState([])
 
   useEffect(() => {
     const dismiss = (id) => setToasts((list) => list.filter((t) => t.id !== id))
 
+    // A store-scoped realtime filter so other stores' orders don't ring here.
+    const changeFilter = { event: 'INSERT', schema: 'public', table: 'orders' }
+    if (effectiveStoreId) changeFilter.filter = `store_id=eq.${effectiveStoreId}`
+
     const channel = supabase
-      .channel('new-orders')
+      .channel(`new-orders-${effectiveStoreId ?? 'all'}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'orders' },
+        changeFilter,
         (payload) => {
           const o = payload.new || {}
           const addr = o.delivery_address || {}
@@ -111,7 +120,7 @@ export default function OrderNotifications() {
       supabase.removeChannel(channel)
       stopAlarm()
     }
-  }, [])
+  }, [effectiveStoreId])
 
   if (toasts.length === 0) return null
 

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons, Divider, ProfileChip } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/AuthContext.jsx'
 
 function dishImg(name = '') {
   const n = name.toLowerCase()
@@ -172,20 +173,23 @@ function BottomCard({ label, value, sub, subTone, icon: Icon }) {
 
 /* ---------- Page ---------- */
 export default function Overview() {
+  const { effectiveStoreId } = useAuth()
   const [orders, setOrders] = useState([])
 
   useEffect(() => {
     let alive = true
-    const load = () =>
-      supabase
+    const load = () => {
+      let q = supabase
         .from('orders')
         .select('*, order_items(quantity, products(name))')
         .order('created_at', { ascending: false })
-        .then(({ data, error }) => {
-          if (!alive) return
-          if (error) console.error('Failed to load orders:', error.message)
-          setOrders(data ?? [])
-        })
+      if (effectiveStoreId) q = q.eq('store_id', effectiveStoreId)
+      return q.then(({ data, error }) => {
+        if (!alive) return
+        if (error) console.error('Failed to load orders:', error.message)
+        setOrders(data ?? [])
+      })
+    }
 
     load()
     // Keep the overview live as orders arrive / change status.
@@ -198,7 +202,7 @@ export default function Overview() {
       alive = false
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [effectiveStoreId])
 
   const totalSalesNum = orders.reduce((s, o) => s + (o.total || 0), 0)
   const totalSales = `₹${totalSalesNum.toLocaleString('en-IN')}`

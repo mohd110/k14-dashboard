@@ -19,6 +19,7 @@ const mainNav = [
   { to: '/menu', label: 'Menu', icon: BookOpen },
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/customers', label: 'Customers', icon: Users },
+  { to: '/outlets', label: 'Outlets', icon: StoreIcon },
 ]
 
 const secondaryNav = [

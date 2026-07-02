@@ -142,8 +142,12 @@ export function AuthProvider({ children }) {
     return supabase.auth.signOut()
   }
 
-  // A staff account with no store_id is the marketplace super-admin.
-  const isSuperAdmin = !!role && ['restaurant', 'bakery'].includes(role) && !storeId
+  // The explicit 'super_admin' role is the marketplace super-admin.
+  // (Legacy fallback: a restaurant/bakery account with no store_id, from
+  //  before migration 011 introduced the dedicated role value.)
+  const isSuperAdmin =
+    role === 'super_admin' ||
+    (!!role && ['restaurant', 'bakery'].includes(role) && !storeId)
   // Which store the UI is currently acting on. Scoped accounts are pinned
   // to their own store; the super-admin picks one (or '' = all stores).
   const effectiveStoreId = isSuperAdmin ? selectedStoreId || null : storeId

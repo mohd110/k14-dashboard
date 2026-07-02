@@ -39,7 +39,7 @@ function fmtLongDate(iso) {
 }
 
 /* ── A single Kitchen Order Ticket card in the right panel ── */
-function KotCard({ order, onAccept, onReject, busy }) {
+function KotCard({ order, onAccept, onReject, busy, stores }) {
   const addr = order.delivery_address || {}
   const items = order.order_items || []
   const code = order.order_code || `ORD-${String(order.id).slice(0, 4).toUpperCase()}`
@@ -130,7 +130,7 @@ function KotCard({ order, onAccept, onReject, busy }) {
           </>
         ) : (
           <button
-            onClick={() => printKot(order, { title: code })}
+            onClick={() => printKot(order, { title: code, stores })}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-line-soft"
           >
             <Printer className="h-4 w-4" /> Print KOT
@@ -142,7 +142,7 @@ function KotCard({ order, onAccept, onReject, busy }) {
 }
 
 export default function Calendar() {
-  const { effectiveStoreId } = useAuth()
+  const { effectiveStoreId, stores, effectiveStore } = useAuth()
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -250,7 +250,7 @@ export default function Calendar() {
 
   const handleAccept = async (order) => {
     const ok = await setStatus(order, 'accepted')
-    if (ok) printKot({ ...order, status: 'accepted' }, { title: order.order_code || 'KOT' })
+    if (ok) printKot({ ...order, status: 'accepted' }, { title: order.order_code || 'KOT', stores })
   }
 
   const handleReject = async (order) => {
@@ -262,7 +262,8 @@ export default function Calendar() {
     if (selectedOrders.length === 0) return
     printKot(selectedOrders, {
       title: `Day KOT ${activeIso}`,
-      heading: `K14 BAKERS · ${fmtLongDate(activeIso)} · ${selectedOrders.length} order${
+      stores,
+      heading: `BMT · ${(effectiveStore?.name || 'All stores')} · ${fmtLongDate(activeIso)} · ${selectedOrders.length} order${
         selectedOrders.length === 1 ? '' : 's'
       }`,
     })
@@ -405,6 +406,7 @@ export default function Calendar() {
                   busy={busyId === o.id}
                   onAccept={handleAccept}
                   onReject={handleReject}
+                  stores={stores}
                 />
               ))
             )}

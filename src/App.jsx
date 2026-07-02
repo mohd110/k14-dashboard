@@ -62,15 +62,15 @@ export default function App() {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/menu" element={<Menu />} />
-            {/* Restaurant-admin only — bakery staff are redirected away */}
-            <Route path="/dashboard" element={<RoleRoute allow={['restaurant']}><Overview /></RoleRoute>} />
-            <Route path="/riders" element={<RoleRoute allow={['restaurant']}><Riders /></RoleRoute>} />
-            <Route path="/customers" element={<RoleRoute allow={['restaurant']}><Customers /></RoleRoute>} />
-            <Route path="/outlets" element={<RoleRoute allow={['restaurant']}><Outlets /></RoleRoute>} />
-            <Route path="/delivery-fees" element={<RoleRoute allow={['restaurant']}><DeliveryFees /></RoleRoute>} />
-            <Route path="/banners" element={<RoleRoute allow={['restaurant']}><Banners /></RoleRoute>} />
-            <Route path="/reports" element={<RoleRoute allow={['restaurant']}><Reports /></RoleRoute>} />
-            <Route path="/settings" element={<RoleRoute allow={['restaurant']}><Settings /></RoleRoute>} />
+            {/* Restaurant-admin + super-admin only — bakery staff are redirected away */}
+            <Route path="/dashboard" element={<RoleRoute allow={['restaurant', 'super_admin']}><Overview /></RoleRoute>} />
+            <Route path="/riders" element={<RoleRoute allow={['restaurant', 'super_admin']}><Riders /></RoleRoute>} />
+            <Route path="/customers" element={<RoleRoute allow={['restaurant', 'super_admin']}><Customers /></RoleRoute>} />
+            <Route path="/outlets" element={<RoleRoute allow={['restaurant', 'super_admin']}><Outlets /></RoleRoute>} />
+            <Route path="/delivery-fees" element={<RoleRoute allow={['restaurant', 'super_admin']}><DeliveryFees /></RoleRoute>} />
+            <Route path="/banners" element={<RoleRoute allow={['restaurant', 'super_admin']}><Banners /></RoleRoute>} />
+            <Route path="/reports" element={<RoleRoute allow={['restaurant', 'super_admin']}><Reports /></RoleRoute>} />
+            <Route path="/settings" element={<RoleRoute allow={['restaurant', 'super_admin']}><Settings /></RoleRoute>} />
           </Route>
         </Routes>
       </BrowserRouter>

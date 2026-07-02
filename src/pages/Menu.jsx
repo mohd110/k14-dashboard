@@ -268,6 +268,189 @@ function AvailabilityModal({ product, dates, onClose, onSaved }) {
   )
 }
 
+/* ── Add a new dish ──
+   Inserts a product for the active store. RLS (products_insert_staff)
+   lets scoped staff add to their own store and the super-admin to any.
+   A new dish is seeded as available on all upcoming dates so it shows to
+   customers immediately (mirrors the availability editor with every day on). */
+function AddDishModal({ stores, defaultStoreId, dates, onClose, onSaved }) {
+  const showPicker = !defaultStoreId // super-admin on "All stores" must choose one
+  const [name, setName] = useState('')
+  const [price, setPrice] = useState('')
+  const [description, setDescription] = useState('')
+  const [stock, setStock] = useState('')
+  const [photoUrl, setPhotoUrl] = useState('')
+  const [isAvailable, setIsAvailable] = useState(true)
+  const [storeId, setStoreId] = useState(defaultStoreId || stores[0]?.id || '')
+  const [saving, setSaving] = useState(false)
+
+  const priceNum = parseInt(price, 10) || 0
+  const stockNum = Math.max(0, parseInt(stock, 10) || 0)
+  const targetStore = defaultStoreId || storeId
+  const canSave = !!name.trim() && priceNum > 0 && !!targetStore
+
+  const save = async () => {
+    if (!canSave) return
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: name.trim(),
+        description: description.trim(),
+        price: priceNum,
+        stock: stockNum,
+        photo_url: photoUrl.trim() || null,
+        is_available: isAvailable,
+        store_id: targetStore,
+      })
+      .select('*')
+      .single()
+    if (error) {
+      setSaving(false)
+      // RLS returns no row when the account can't write this store's menu.
+      if (error.code === 'PGRST116') {
+        alert(
+          'Dish could not be saved — this account may not have permission to add to this store’s menu. ' +
+            'Run migration 005 (restaurant role) / 011 (store scoping) and sign in again.'
+        )
+      } else {
+        alert(`Could not add dish: ${error.message}`)
+      }
+      return
+    }
+    // Turn the dish on for every upcoming date (best-effort).
+    let off = dates.length
+    const { error: availErr } = await supabase
+      .from('product_availability')
+      .insert(dates.map((d) => ({ product_id: data.id, available_date: d.iso })))
+    if (!availErr) off = 0
+    setSaving(false)
+    onSaved(data, off)
+  }
+
+  return (
+    <Modal
+      title="Add new dish"
+      subtitle="Create a menu item for your store."
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-ink hover:bg-line-soft"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || !canSave}
+            className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Add dish
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {showPicker && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Store
+            </label>
+            <select
+              value={storeId}
+              onChange={(e) => setStoreId(e.target.value)}
+              className="h-11 w-full rounded-lg border border-line bg-surface-low px-3 text-sm text-ink outline-none focus:border-brand"
+            >
+              <option value="" disabled>
+                Select a store…
+              </option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Dish name
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Chicken Biryani"
+            autoFocus
+            className="h-11 w-full rounded-lg border border-line bg-surface-low px-3 text-sm text-ink outline-none focus:border-brand"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Price (₹)
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={price}
+              onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="0"
+              className="h-11 w-full rounded-lg border border-line bg-surface-low px-3 text-sm text-ink outline-none focus:border-brand"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Initial stock
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={stock}
+              onChange={(e) => setStock(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="0"
+              className="h-11 w-full rounded-lg border border-line bg-surface-low px-3 text-sm text-ink outline-none focus:border-brand"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Description <span className="font-normal normal-case text-ink-muted">(optional)</span>
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder="Short description shown to customers"
+            className="w-full resize-none rounded-lg border border-line bg-surface-low px-3 py-2 text-sm text-ink outline-none focus:border-brand"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Photo URL <span className="font-normal normal-case text-ink-muted">(optional)</span>
+          </label>
+          <input
+            value={photoUrl}
+            onChange={(e) => setPhotoUrl(e.target.value)}
+            placeholder="https://…"
+            className="h-11 w-full rounded-lg border border-line bg-surface-low px-3 text-sm text-ink outline-none focus:border-brand"
+          />
+        </div>
+
+        <label className="flex items-center justify-between rounded-lg border border-line px-3 py-2.5">
+          <span className="text-sm font-semibold text-ink">Available now</span>
+          <Toggle on={isAvailable} onClick={() => setIsAvailable((v) => !v)} />
+        </label>
+      </div>
+    </Modal>
+  )
+}
+
 /* ── Add inventory ── */
 function StockModal({ product, onClose, onSaved }) {
   const [amount, setAmount] = useState('')
@@ -354,12 +537,13 @@ function StockModal({ product, onClose, onSaved }) {
 }
 
 export default function Menu() {
-  const { effectiveStoreId } = useAuth()
+  const { effectiveStoreId, stores } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState(null)
   const [availFor, setAvailFor] = useState(null) // product being edited for dates
   const [stockFor, setStockFor] = useState(null) // product being restocked
+  const [showAdd, setShowAdd] = useState(false) // add-new-dish modal open
   const [offDays, setOffDays] = useState({}) // productId -> number of upcoming days unavailable
 
   const dates = upcomingDates(14)
@@ -471,7 +655,10 @@ export default function Menu() {
               Organize your culinary offerings, update pricing, inventory, and date availability.
             </p>
           </div>
-          <button className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-white hover:bg-brand-dark">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-white hover:bg-brand-dark"
+          >
             <Plus className="h-4 w-4" /> Add New Dish
           </button>
         </div>
@@ -630,6 +817,22 @@ export default function Menu() {
           </div>
         </div>
       </div>
+
+      {showAdd && (
+        <AddDishModal
+          stores={stores}
+          defaultStoreId={effectiveStoreId}
+          dates={dates}
+          onClose={() => setShowAdd(false)}
+          onSaved={(product, off) => {
+            setProducts((prev) =>
+              [product, ...prev].sort((a, b) => (b.price || 0) - (a.price || 0))
+            )
+            setOffDays((prev) => ({ ...prev, [product.id]: off }))
+            setShowAdd(false)
+          }}
+        />
+      )}
 
       {availFor && (
         <AvailabilityModal

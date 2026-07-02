@@ -22,10 +22,26 @@ const esc = (s) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
   )
 
+/* Marketplace + house wordmarks shared by the KOT and the customer bill. */
+export const BMT_NAME = 'BMT'
+export const HOUSE_MARK = 'k14 epicurian delight foods'
+export const POWERED_BY = 'Powered by Taskshift AI'
+
+/* Resolve the human store name (e.g. "Kebabchi", "K14 Bakery") for an order.
+   Prefer the live stores list; fall back to the order_code store segment. */
+export function storeNameFor(o, stores) {
+  const s = stores?.find((st) => st.id === o?.store_id)
+  if (s?.name) return s.name
+  // order_code shape: BMT/<KEB>/ddmmyy-0001  →  show the middle segment.
+  const seg = String(o?.order_code || '').split('/')[1]
+  return seg || 'BMT'
+}
+
 /* One ticket (one order). */
-function ticketHtml(o) {
+function ticketHtml(o, stores) {
   const addr = o.delivery_address || {}
   const items = o.order_items || []
+  const store = storeNameFor(o, stores)
   const code = o.order_code || `ORD-${String(o.id).slice(0, 4).toUpperCase()}`
   const rows = items
     .map((it) => {
@@ -42,7 +58,9 @@ function ticketHtml(o) {
 
   return `<section class="ticket">
     <div class="head">
-      <div class="brand">K14 BAKERS</div>
+      <div class="bmt">${esc(BMT_NAME)}</div>
+      <div class="house">${esc(HOUSE_MARK)}</div>
+      <div class="brand">${esc(store).toUpperCase()}</div>
       <div class="sub">KITCHEN ORDER TICKET</div>
     </div>
     <div class="meta">
@@ -64,11 +82,15 @@ function ticketHtml(o) {
     </div>
     ${o.note ? `<div class="note">📝 ${esc(o.note)}</div>` : ''}
     <div class="foot">Printed ${new Date().toLocaleString('en-IN')}</div>
+    <div class="mark">
+      <span class="mark-house">${esc(HOUSE_MARK)}</span>
+      <span class="mark-power">${esc(POWERED_BY)}</span>
+    </div>
   </section>`
 }
 
-function documentHtml(orders, { title = 'KOT', heading } = {}) {
-  const tickets = orders.map(ticketHtml).join('')
+function documentHtml(orders, { title = 'KOT', heading, stores } = {}) {
+  const tickets = orders.map((o) => ticketHtml(o, stores)).join('')
   return `<!doctype html><html><head><meta charset="utf-8"/>
   <title>${esc(title)}</title>
   <style>
@@ -79,7 +101,9 @@ function documentHtml(orders, { title = 'KOT', heading } = {}) {
     .ticket { width: 72mm; margin: 0 auto 10mm; page-break-after: always; }
     .ticket:last-child { page-break-after: auto; }
     .head { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 6px; }
-    .brand { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+    .bmt { font-size: 24px; font-weight: 800; letter-spacing: 4px; }
+    .house { font-size: 10px; letter-spacing: 1px; margin-top: 1px; text-transform: uppercase; }
+    .brand { font-size: 18px; font-weight: 800; letter-spacing: 2px; margin-top: 5px; }
     .sub { font-size: 11px; letter-spacing: 2px; margin-top: 2px; }
     .meta { padding: 8px 0; border-bottom: 1px dashed #000; }
     .code { font-size: 14px; font-weight: 800; text-align: center; margin-bottom: 6px; }
@@ -96,6 +120,9 @@ function documentHtml(orders, { title = 'KOT', heading } = {}) {
     .totals .big { font-size: 15px; font-weight: 800; border-top: 1px solid #000; margin-top: 4px; padding-top: 4px; }
     .note { margin-top: 8px; border: 1px solid #000; padding: 6px; font-size: 12px; }
     .foot { text-align: center; font-size: 10px; color: #555; margin-top: 8px; }
+    .mark { margin-top: 6px; padding-top: 5px; border-top: 1px dashed #000; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 8px; }
+    .mark-house { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mark-power { text-align: right; color: #555; }
   </style></head>
   <body>
     ${heading ? `<div class="day-head">${esc(heading)}</div>` : ''}

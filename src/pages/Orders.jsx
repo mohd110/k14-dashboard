@@ -11,10 +11,12 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
+  MessageCircle,
 } from 'lucide-react'
 import Topbar, { SearchBox, TopIcons } from '../layout/Topbar.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
+import { whatsappBillUrl } from '../lib/billText.js'
 
 /* Product thumbnail: prefer the item's own photo, else a neutral tinted
    initial (data-URI SVG) so we never show an unrelated brand dish. */
@@ -57,12 +59,14 @@ const PAYMENT = {
 }
 const PAYMENT_KEYS = Object.keys(PAYMENT)
 
-/* Clickable payment pill — verify or reject the customer's 40% advance. */
-function PaymentSelect({ order, onChange }) {
+/* Clickable payment pill — verify or reject the customer's 40% advance.
+   Approving (Paid) auto-opens a WhatsApp bill to the customer. */
+function PaymentSelect({ order, stores, onChange }) {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const ref = useRef(null)
   const p = PAYMENT[order.payment_status] ?? PAYMENT.awaiting_verification
+  const waUrl = whatsappBillUrl(order, stores)
 
   useEffect(() => {
     if (!open) return
@@ -85,10 +89,15 @@ function PaymentSelect({ order, onChange }) {
       return
     }
     onChange(order.id, payment_status)
+    // On approval, auto-open WhatsApp with the customer's bill pre-filled.
+    if (payment_status === 'paid' && waUrl) {
+      window.open(waUrl, '_blank', 'noopener')
+    }
   }
 
   return (
     <div className="relative" ref={ref}>
+      <div className="flex items-center gap-1.5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -100,6 +109,18 @@ function PaymentSelect({ order, onChange }) {
         <span className={`h-1.5 w-1.5 rounded-full ${p.dot}`} /> {p.label}
         <ChevronDown className="h-3 w-3 opacity-70" />
       </button>
+      {order.payment_status === 'paid' && waUrl && (
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Send the bill to the customer on WhatsApp"
+          className="inline-flex items-center gap-1 rounded-full bg-[#25D366] px-2.5 py-1 text-xs font-semibold text-white hover:brightness-95"
+        >
+          <MessageCircle className="h-3 w-3" /> Bill
+        </a>
+      )}
+      </div>
       {open && (
         <div className="absolute left-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
           {PAYMENT_KEYS.map((key) => {
@@ -209,7 +230,7 @@ function Kpi({ label, value, sub, icon: Icon, iconBg }) {
 }
 
 export default function Orders() {
-  const { role, effectiveStoreId } = useAuth()
+  const { role, effectiveStoreId, stores } = useAuth()
   const isBakery = role === 'bakery'
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -217,7 +238,7 @@ export default function Orders() {
   const load = useCallback(() => {
     let q = supabase
       .from('orders')
-      .select('*, order_items(quantity, products(name, photo_url))')
+      .select('*, order_items(quantity, price_at_order, products(name, photo_url))')
       .order('created_at', { ascending: false })
     // Scoped accounts are already limited by RLS; this also lets the
     // super-admin narrow to a single store via the switcher.
@@ -388,7 +409,7 @@ export default function Orders() {
                       </td>
                       <td className="px-5 py-4 text-sm font-semibold text-ink">₹{o.total}</td>
                       <td className="px-5 py-4">
-                        <PaymentSelect order={o} onChange={updatePayment} />
+                        <PaymentSelect order={o} stores={stores} onChange={updatePayment} />
                         <p className="mt-1 flex items-center gap-2 text-xs text-ink-soft">
                           <span>₹{o.advance_amount ?? 0} advance</span>
                           {o.payment_proof_url ? (
